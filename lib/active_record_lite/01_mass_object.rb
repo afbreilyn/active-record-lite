@@ -16,7 +16,6 @@ class MassObject < AttrAccessorObject
     params.each do |attr, value|
       attr = attr.to_sym
       self.send("#{attr}=", value)
-
     end
   end
 

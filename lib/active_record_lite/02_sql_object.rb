@@ -19,7 +19,6 @@ end
 class SQLObject < MassObject
 
   def self.my_attr_accessor(*names)
-
     names.each do |name|
       define_method(name) do
         self.attributes[name.to_sym]
@@ -35,10 +34,10 @@ class SQLObject < MassObject
 
   def self.columns
     col_arr = DBConnection.execute2("SELECT * FROM #{@table_name}")[0]
-
     col_arr.each do |column|
       my_attr_accessor(column)
     end
+
 
   end
 
@@ -55,8 +54,7 @@ class SQLObject < MassObject
     end
   end
 
-  def self.all #????????????????????????
-
+  def self.all
     meow = DBConnection.execute(<<-SQL)
     SELECT
       #{self.table_name}.*
@@ -64,24 +62,54 @@ class SQLObject < MassObject
       #{self.table_name}
       SQL
 
-    # parse_all(meow)
+    parse_all(meow)
   end
 
   def self.find(id)
-    # ...
+    meow = DBConnection.execute(<<-SQL, id)
+    SELECT
+      *
+    FROM
+      #{self.table_name}
+    WHERE
+      #{self.table_name}.id = ?
+    SQL
+
+    self.new(meow.first)
   end
 
   def attributes
     @attributes ||= {}
   end
 
+  # def attribute_values
+  #    @attributes.values
+  # end
+
   def insert
-    # ...
+    col_name = self.attributes.keys.join(", ")
+    question_marks = (["?"] * self.attributes.values.count).join(', ')
+
+    meow = DBConnection.execute(<<-SQL, *attribute_values)
+    INSERT INTO
+      #{self.class.table_name} (#{col_name})
+    VALUES
+      (#{question_marks})
+    SQL
+
+    self_id = last_insert_row_id
   end
   #
-  # def initialize({})
-  #   # ...
-  # end
+  def initialize(params = {})
+    params.each do |attr_name, value|
+      attr_name = attr_name.to_sym
+      if self.class.columns.include?(attr_name)
+        raise unknown attribute '#{attr_name}'
+      else
+        self.send("#{attr_name}=", value)
+      end
+    end
+  end
 
   def save
     # ...
