@@ -89,8 +89,9 @@ class SQLObject < MassObject
   def insert
     col_name = self.attributes.keys.join(", ")
     question_marks = (["?"] * self.attributes.values.count).join(', ')
+    #the problem is here.... there's something with the ('join')
 
-    meow = DBConnection.execute(<<-SQL, *attribute_values)
+    meow = DBConnection.execute(<<-SQL, attribute_values)
     INSERT INTO
       #{self.class.table_name} (#{col_name})
     VALUES
