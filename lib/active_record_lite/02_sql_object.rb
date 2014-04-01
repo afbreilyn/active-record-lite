@@ -1,7 +1,7 @@
 require_relative 'db_connection'
 require_relative '01_mass_object'
 require 'active_support/inflector'
-
+require 'debugger'
 
 class MassObject
 
@@ -82,9 +82,9 @@ class SQLObject < MassObject
     @attributes ||= {}
   end
 
-  # def attribute_values
-  #    @attributes.values
-  # end
+  def attribute_values
+     @attributes.values
+  end
 
   def insert
     col_name = self.attributes.keys.join(", ")
@@ -98,7 +98,7 @@ class SQLObject < MassObject
       (#{question_marks})
     SQL
 
-    self_id = last_insert_row_id
+    self.id = DBConnection.last_insert_row_id
   end
   #
   def initialize(params = {})
@@ -113,14 +113,25 @@ class SQLObject < MassObject
   end
 
   def save
-    # ...
+    id.nil? ? insert : update
   end
 
   def update
-    # ...
+    #debugger
+    update_line = self.class.columns
+      .map { |attr| "#{ attr } = ?" }.join(", ")
+      #debugger
+    DBConnection.execute(<<-SQL, *attribute_values, id)
+      UPDATE
+        #{ self.class.table_name }
+      SET
+        #{ update_line }
+      WHERE
+        #{ self.class.table_name }.id = ?
+    SQL
   end
 
-  def attribute_values
-    # ...
-  end
+  # def attribute_values
+  #   # ...
+  # end
 end
